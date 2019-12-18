@@ -1,0 +1,28 @@
+#!/bin/bash
+
+function error {
+    # ERROR OUTPUT
+    COLOR='\033[41m'
+    RESET='\033[0m'
+
+    echo -e ${COLOR}${1}${RESET}
+}
+
+if [ ! $# = 1 ]; then
+    error "Only one argument allowed!"
+fi
+
+command=''
+for cmd in "$@"
+do
+    case ${cmd} in
+        p|php)
+            command="docker-compose exec php bash"
+            ;;
+        n|npm|node)
+            command="docker-compose run npm bash"
+            ;;
+    esac
+done
+
+${command}

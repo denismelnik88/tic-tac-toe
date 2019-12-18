@@ -1,0 +1,61 @@
+version: '2'
+
+services:
+  nginx:
+    container_name: vodworks_nginx
+    image: nginx:latest
+    links:
+      - php:php-fpm
+
+    labels:
+      com.docker.lb.hosts: localhost
+      com.docker.lb.network: universal
+      com.docker.lb.port: 32900
+      com.docker.lb.ssl_cert: demo_localhost.cert
+      com.docker.lb.ssl_key: demo_localhost.key
+    environment:
+      METADATA: proxy-handles-tls
+    ports:
+      - "32900:80"
+    volumes:
+      - ./dev/nginx/site.conf:/etc/nginx/conf.d/default.conf:ro
+      - .:/var/www/html
+    networks:
+      - universal
+    working_dir: /var/www/html
+
+  php:
+    container_name: vodworks_php
+    build:
+      context: .
+      dockerfile: ./dev/php/Dockerfile
+    environment:
+      PHP_IDE_CONFIG: "serverName=Docker-xdebug"
+    volumes:
+      - .:/var/www/html
+      - ./dev/php/php.ini:/usr/local/etc/php/php.ini
+    networks:
+      - universal
+    working_dir: /var/www/html
+    expose:
+      - 9000
+
+  npm:
+    container_name: vodworks_npm
+    image: node:9
+    volumes:
+      - .:/var/www/html
+    working_dir: /var/www/html
+
+networks:
+  universal:
+    driver: "overlay"
+  secrets:
+    localhost.cert:
+      file: ./localhost.cert
+    localhost.key:
+      file: ./localhost.key
+
+volumes:
+  universal-data:
+    driver: "local"
